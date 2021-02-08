@@ -62,11 +62,14 @@ class Model(object):
 				f.write(str(acct))
 
 class Sim(object):
-	def __init__(self, model, start, end):
+	def __init__(self, model, start, end, summary_every_n_years=10, ignore_accounts=['Income', 'RSUs']):
 		self.model = model
 		self.start = start
 		self.end = end
+		self.ignore_accounts = ignore_accounts
+		self.summary_every_n_years = summary_every_n_years
 		self.summary = dict()
+		
 
 	def fmt(self, n, width=13):
 		if abs(n) < 0.001:
@@ -74,7 +77,7 @@ class Sim(object):
 		return ('{:>%ds}' % width).format('${:,.0f}'.format(n))
 
 	def accounts(self):
-		return [acct for acct in self.model.accounts.values() if acct.name != 'Income' and acct.name != 'RSUs']
+		return [acct for acct in self.model.accounts.values() if not acct.name in self.ignore_accounts]
 
 	def balances(self):
 		balances = [acct.balance() for acct in self.accounts()]
@@ -96,11 +99,14 @@ class Sim(object):
 				self.model.update(year, month, market.get_monthly())
 				self.model.run()
 
-			if year % 10 == 0:
+			if year % self.summary_every_n_years == 0:
 				self.summary[year] = defaultdict(int)
+				total = 0
 				for acct in self.accounts():
+					total += acct.balance()
 					if acct.category is not None:
 						self.summary[year][acct.category] += acct.balance()
+					self.summary[year]['Total'] = total
 
 		if not quiet:
 			print(('%d' % self.end) + ''.join([self.fmt(bal) for bal in self.balances()]))
@@ -115,12 +121,12 @@ class MC(object):
 		sim = Sim(self.model, self.start, self.end)
 		sim.run()
 
-	def run(self, n):
+	def run(self, n, summary_every_n_years=10):
 		summary = defaultdict(lambda: defaultdict(list))
 		fails = 0
 		for i in range(n):
 			random.seed(i)
-			sim = Sim(self.model, 2021, 2070)
+			sim = Sim(self.model, self.start, self.end, summary_every_n_years)
 			try:
 				sim.run(True)
 			except:
@@ -131,7 +137,7 @@ class MC(object):
 
 		for year, stats in summary.items():
 			print('\n{:>18}  {:>13} {:>13} {:>13} {:>13} {:>13}'.format(year, '10%', '20%', '50%', '80%', 'Mean'))
-			for key, vals in stats.items():
+			for key, vals in sorted(stats.items()):
 				if len(vals) < n:
 					vals = [0] * (n - len(vals)) + vals
 				vals = sorted(vals)
