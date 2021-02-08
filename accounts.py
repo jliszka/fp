@@ -145,9 +145,9 @@ class Account(Base):
 			self.into(dst, bal - keep_max)
 		elif bal < keep_min:
 			for src in srcs:
-				if bal > keep_max:
+				if bal > keep_min:
 					break
-				src.into(self, keep_max - bal)
+				src.into(self, keep_min - bal)
 				bal = self.balance()
 		return self
 
