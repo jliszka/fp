@@ -128,7 +128,7 @@ class Account(Base):
 	def outof(self, amt, accounts):
 		for acct in accounts:
 			if amt <= 0.001:
-				break			
+				break
 			actual = acct.withdraw(amt, 'Transfer to {}'.format(self.name))
 			self.deposit(actual, 'Transfer from {}'.format(acct.name))
 			amt -= actual
@@ -139,25 +139,27 @@ class Account(Base):
 			self.into(dst, bal - keep)
 		return self
 
-	def keep(self, dst, srcs, keep=0):
+	def keep(self, dst, srcs, keep_max=0, keep_min=0):
 		bal = self.balance()
-		if bal > keep:
-			self.into(dst, bal - keep)
-		else:
+		if bal > keep_max:
+			self.into(dst, bal - keep_max)
+		elif bal < keep_min:
 			for src in srcs:
-				if bal > keep:
+				if bal > keep_min:
 					break
-				src.into(self, keep - bal)
+				src.into(self, keep_min - bal)
 				bal = self.balance()
 		return self
 
 
 class Income(Base):
-	def __init__(self, annually, increase, bonus=0):
+	def __init__(self, annually, increase, bonus=0, bonus_month=2, every_n_month=1):
 		super().__init__()
 		self.annually = annually
 		self.increase = increase
 		self.bonus_pct = bonus
+		self.bonus_month = bonus_month
+		self.every_n_month = every_n_month
 
 	def rate(self):
 		return self.increase.get()
@@ -169,23 +171,28 @@ class Income(Base):
 	def get(self):
 		if not self.is_current():
 			return 0
-		amt = self.annually / 12
-		if self.month == 2:
+		amt = 0
+		if self.month % self.every_n_month == 0:
+			amt += self.annually / (12 / self.every_n_month)
+		if self.month == self.bonus_month:
 			amt += self.annually * self.bonus_pct
 		return amt
 
 
 class RSU(Base):
-	def __init__(self, qty, price):
+	def __init__(self, quarterly_qty, price):
+		"""
+		price is an Account
+		"""
 		super().__init__()
-		self.qty = qty
+		self.quarterly_qty = quarterly_qty
 		self.price = price
 
 	def get(self):
 		if not self.is_current():
 			return 0
 		if self.month % 3 == 1:
-			return self.qty * self.price.balance()
+			return self.quarterly_qty * self.price.balance()
 		else:
 			return 0
 

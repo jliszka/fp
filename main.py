@@ -20,15 +20,15 @@ class Model1(Model):
 		stock_price = Account(total=42.0, beta=0.1, alpha=Dist(0.02, 0.1))
 		self.income('Stock', stock_price)
 
-		self.income('RSU 1', RSU(qty=200, price=stock_price).end(2022, 4))
-		self.income('RSU 2', RSU(qty=120, price=stock_price).end(2023, 4))
+		self.income('RSU 1', RSU(quarterly_qty=200, price=stock_price).end(2022, 4))
+		self.income('RSU 2', RSU(quarterly_qty=120, price=stock_price).end(2023, 4))
 
 		self.account('Income', Account())
 		self.account('RSUs', Account())
 
 		self.account('Checking', Account(total=26000, category='Investments'))
 		self.account('Merrill', Account(total=210000, basis=150000, beta=0.2, alpha=Dist(0.01, 0.005), tax_rate=0.2, category='Investments'))
-		self.account('E*Trade', Account(total=82000, basis=51000, beta=1.5, alpha=Dist(0.0, 0.03), tax_rate=0.2, category='Investments'))
+		self.account('ETrade', Account(total=82000, basis=51000, beta=1.5, alpha=Dist(0.0, 0.03), tax_rate=0.2, category='Investments'))
 
 		self.account('Jason 401k', Account(total=148000, beta=0.8, alpha=Dist(0.01, 0.005), category='Retirement').start(2040))
 		self.account('Jason IRA', Account(total=230000, beta=0.8, alpha=Dist(0.00, 0.005), category='Retirement').start(2040))
@@ -63,7 +63,7 @@ class Model1(Model):
 
 		checking = self.account('Checking')
 		ml = self.account('Merrill')
-		etrade = self.account('E*Trade')
+		etrade = self.account('ETrade')
 		j401k = self.account('Jason 401k')
 		s401k = self.account('Selene 401k')
 		roth = self.account('Jason Roth')
